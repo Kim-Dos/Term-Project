@@ -1,6 +1,6 @@
 import requests
 
-url = "https://api.upbit.com/v1/ticker?markets="
+# url = "https://api.upbit.com/v1/ticker?markets="
 
 d = [
 "KRW-BTC,KRW-ETH,KRW-NEO,KRW-MTL,KRW-XRP,KRW-ETC,KRW-SNT,KRW-WAVES,KRW-XEM,KRW-QTUM",
@@ -17,9 +17,31 @@ d = [
 "KRW-BLUR,KRW-IMX,KRW-SEI,KRW-MINA,KRW-CTC,KRW-ASTR,KRW-ID,KRW-PYTH,KRW-MNT,KRW-AKT",
 "KRW-ZETA,KRW-AUCTION"
 ]
-headers = {"accept": "application/json"}
+import tkinter as tk
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
+import pyupbit
 
-for i in range(13):
-    response = requests.get(url+d[i], headers=headers)
+# 데이터 가져오기
+coin = "BTC"
+interval = "day"  # day, minute1, minute3, minute5, minute10, minute15, minute30, minute60
+df = pyupbit.get_ohlcv(f"{coin}-USDT", interval=interval, count=30)
 
-    print(response.text)
+# 차트 그리기
+root = tk.Tk()
+root.title(f"{coin} Price Chart")
+
+fig = Figure(figsize=(8, 6))
+ax = fig.add_subplot(111)
+ax.plot(df.index, df["close"], label=f"{coin} Price", color="b")
+ax.set_xlabel("Date")
+ax.set_ylabel("Price (USDT)")
+ax.set_title(f"{coin} Price Chart")
+ax.grid(True)
+ax.legend()
+
+canvas = FigureCanvasTkAgg(fig, master=root)
+canvas.draw()
+canvas.get_tk_widget().pack()
+
+root.mainloop()

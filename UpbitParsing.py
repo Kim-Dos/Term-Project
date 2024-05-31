@@ -32,16 +32,17 @@ class UPBIT_INFO:
 
     def find_coin(self, name):
         for c in self.KRW_List:
-            if c['korean_name'] == name or c['english_name'] == name or c['market']:
+            if c['korean_name'] == name or c['english_name'] == name or c['market'] == name:
                 return True
         return False
     def get_coin(self, name):
         for c in self.KRW_List:
-            if c['korean_name'] == name or c['english_name'] == name or c['market']:
+            if c['korean_name'] == name or c['english_name'] == name or c['market'] == name:
                 return c
 #  실제로 유저의 요청을 받는 클래스
 #  현재 들고있는 코인 및 원화, 매수, 매도 및 return된 정보를 받아서 또 return
 class USER_INFO:
+    Coin_info = UPBIT_INFO()
     def __init__(self):
         # API KEY를 통한 자신의 계정 진입
         with open("key.txt") as f:
@@ -51,8 +52,9 @@ class USER_INFO:
         self.user = Upbit(access_key, secret_key)
 
     def limit_buy(self, name, price, volume):
+        temp = self.Coin_info.get_coin(name)
         try:
-            res = self.user.buy_limit_order(name, price, volume)
+            res = self.user.buy_limit_order(temp['market'], price, volume)
             if 'error' in res:
                 return -1
         except Exception as e:
@@ -60,8 +62,11 @@ class USER_INFO:
         return 0
 
     def limit_sell(self, name, price, volume):
+        if(self.Coin_info.find_coin(name) == False):
+            return - 2
+        temp = self.Coin_info.get_coin(name)
         try:
-            res = self.user.sell_limit_order(name, price, volume)
+            res = self.user.sell_limit_order(temp['market'], price, volume)
             if 'error' in res:
                 return -1
         except Exception as e:
@@ -69,18 +74,23 @@ class USER_INFO:
         return 0
 
     def market_buy(self, name, price):
-        if price < 5000:
+        if int(price) < 5000:
             return -1
+        if self.Coin_info.find_coin(name) == False:
+            return -4
+        temp = self.Coin_info.get_coin(name)
         try:
-            res = self.user.buy_market_order(name, price)
+            print(temp['market'])
+            res = self.user.buy_market_order(temp['market'], price)
             if 'error' in res:
-                return -1
+                return -2
         except Exception as e:
-            return -1
+            return -3
         return 0
-    def market_sell(self, name, volume):
+    def market_sell(self, name, price):
+        temp = self.Coin_info.get_coin(name)
         try:
-            res = self.user.sell_market_order(name, volume)
+            res = self.user.sell_market_order(temp['market'], price)
             if 'error' in res:
                 return -1
         except Exception as e:

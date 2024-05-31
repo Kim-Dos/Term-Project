@@ -3,6 +3,7 @@ from tkinter import font
 from UpbitParsing import *
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
 
 
 # Matplotlib 창 생성
@@ -10,7 +11,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 # axes = figure.add_subplot(111)
 
 # Matplotlib 그래프를 Tkinter 앱에 추가하기
-# canvas = FigureCanvasTkAgg(figure, master=app)
+# canvas = FigureCanvasTkAgg(figure, master=self.GraphFrame)
 # canvas.draw()
 # canvas.get_tk_widget().pack()
 
@@ -45,19 +46,20 @@ class MAINGUI:
         self.CoinScrollBar.pack(side="right", fill="y")  # 스크롤바를 화면에 배치
         self.canvasFrame = Frame(self.CoinCanvas)
         self.CoinCanvas.create_window((0,0), window=self.canvasFrame)
+        # 모든 코인 불러오기
         self.ShowAllCoins()
-
         self.canvasFrame.update_idletasks()
         self.CoinCanvas.config(scrollregion=self.CoinCanvas.bbox("all"))
         self.CoinCanvas.pack(side="top", fill="both", expand=True)
-
+        
+        # 좌프레임에 박았는데 왜 우프레임에 있는지 모르겠지만 일단 사용
         self.GraphFrame = Frame(self.window)
         self.GraphFrame.pack(side='top')
         self.GraphCanvas = Canvas(self.GraphFrame, bg='white')
         self.GraphCanvas.pack(side='top')
 
     def InitRightFrame(self):
-
+        # 우 프레임 (코인 검색, 잔고 확인 및 매매)
         self.RightFrame= Frame(self.window)
         self.RightFrame.pack(side='right', anchor='ne')
 
@@ -102,10 +104,10 @@ class MAINGUI:
         self.sticklabel2.grid(row=13,column=2)
 
         # 매수 매도 버튼
-        self.SellButton = Button(self.RightFrame, text='매수', font=self.tempFont, command=self.Sell)
-        self.SellButton.grid(row=14, column=1)
-        self.BuyButton = Button(self.RightFrame, text='매도', font=self.tempFont, command=self.Buy)
-        self.BuyButton.grid(row=14, column=2)
+        self.BuyButton = Button(self.RightFrame, text='매수', font=self.tempFont, command=self.Buy)
+        self.BuyButton.grid(row=14, column=1)
+        self.SellButton = Button(self.RightFrame, text='매도', font=self.tempFont, command=self.Sell)
+        self.SellButton.grid(row=14, column=2)
 
         Label(self.RightFrame, width=5).grid(row=0,column=5)
 
@@ -149,11 +151,17 @@ class MAINGUI:
             label.bind('<Double-Button-1>', self.ShowCoinInfo)
 
     def CoinSearch(self):
+        pass
         self.sticklabel1.config(text='가격')
         self.sticklabel2.config(text='양')
         name = self.CoinName.get()
+        interval = 'day'
+        fig = Figure(figsize=(8, 6))
         if self.Coins.find_coin(name):
-            self.Coins.get_coin(name)
+            coin = self.Coins.get_coin(name)
+            df = get_ohlcv(ticker= coin['market'], interval=interval, count=30)
+            ax = fig.add_subplot(111)
+        pass
 
 
     def Sell(self):
@@ -161,26 +169,29 @@ class MAINGUI:
         price = self.PriceEntry.get()
         volume = self.VolumeEntry.get()
         if self.MarketPrice:
-            if -1 == self.User.market_sell(name, price):
-                self.sticklabel1.config(text='Error!!!!!!!!!!!!!!!!!')
-                self.sticklabel2.config(text='Error!!!!!!!!!!!!!!!!!')
+            cnt = self.User.market_sell(name, price)
+            if  0 > cnt:
+                self.sticklabel1.config(text='Error!!!!!!!!!!!!!!!!!'+str(cnt))
+                self.sticklabel2.config(text='Error!!!!!!!!!!!!!!!!!'+str(cnt))
         else:
-            if -1 == self.User.limit_sell(name, price, volume):
-                self.sticklabel1.config(text='Error!!!!!!!!!!!!!!!!!')
-                self.sticklabel2.config(text='Error!!!!!!!!!!!!!!!!!')
+            cnt = self.User.limit_sell(name, price, volume)
+            if 0 > cnt:
+                self.sticklabel1.config(text='Error!!!!!!!!!!!!!!!!!'+str(cnt))
+                self.sticklabel2.config(text='Error!!!!!!!!!!!!!!!!!'+str(cnt))
         self.PrintCurrentCash()
     def Buy(self):
         name = self.CoinName.get()
         price = self.PriceEntry.get()
         volume = self.VolumeEntry.get()
+        cnt = self.User.market_buy(name, price)
         if self.MarketPrice:
-            if -1 == self.User.market_buy(name, price):
-                self.sticklabel1.config(text='Error!!!!!!!!!!!!!!!!!')
-                self.sticklabel2.config(text='Error!!!!!!!!!!!!!!!!!')
+            if 0 > self.User.market_buy(name, price):
+                self.sticklabel1.config(text='Error!!!!!!!!!!!!!!!!!'+str(cnt))
+                self.sticklabel2.config(text='Error!!!!!!!!!!!!!!!!!'+str(cnt))
         else:
             if -1 == self.User.limit_buy(name, price, volume):
-                self.sticklabel1.config(text='Error!!!!!!!!!!!!!!!!!')
-                self.sticklabel2.config(text='Error!!!!!!!!!!!!!!!!!')
+                self.sticklabel1.config(text='Error!!!!!!!!!!!!!!!!!'+str(cnt))
+                self.sticklabel2.config(text='Error!!!!!!!!!!!!!!!!!'+str(cnt))
         self.PrintCurrentCash()
 
 MAINGUI()
