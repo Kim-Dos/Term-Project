@@ -1,3 +1,7 @@
+# 구현해야할 것들
+# 즐겨찾기, C/C++ 연동, 맵
+
+
 from tkinter import *
 from tkinter import font
 from UpbitParsing import *
@@ -16,8 +20,9 @@ from matplotlib.figure import Figure
 # canvas.get_tk_widget().pack()
 
 class MAINGUI:
-    PrintFavoriteCoin = False
+    PrintFavoriteCoin = True
     MarketPrice = True
+    GraphWidget = False
     User = USER_INFO()
     Coins = UPBIT_INFO()
     def __init__(self):
@@ -44,12 +49,12 @@ class MAINGUI:
         self.CoinCanvas = Canvas(self.LeftFrame, bg='white')
         self.CoinScrollBar = Scrollbar(self.LeftFrame, command=self.CoinCanvas.yview)
         self.CoinScrollBar.pack(side="right", fill="y")  # 스크롤바를 화면에 배치
-        self.canvasFrame = Frame(self.CoinCanvas)
+        self.canvasFrame = Frame(self.CoinCanvas, bg='white')
         self.CoinCanvas.create_window((0,0), window=self.canvasFrame)
         # 모든 코인 불러오기
         self.ShowAllCoins()
         self.canvasFrame.update_idletasks()
-        self.CoinCanvas.config(scrollregion=self.CoinCanvas.bbox("all"))
+        self.CoinCanvas.config(scrollregion=self.CoinCanvas.bbox("all"), height=1000)
         self.CoinCanvas.pack(side="top", fill="both", expand=True)
         
         # 좌프레임에 박았는데 왜 우프레임에 있는지 모르겠지만 일단 사용
@@ -115,7 +120,7 @@ class MAINGUI:
         accounts = self.User.currentAccount()
         self.tempFont = font.Font(size=14)
         for i in range(len(accounts)):
-            label = Label(self.CashFrame, text= "종목 "+accounts[i]['currency']+", 자산"+accounts[i]['balance'], bg='white')
+            label = Label(self.CashFrame, text="종목 "+accounts[i]['currency']+", 자산"+accounts[i]['balance'], bg='white')
             label.grid(row=i, column=0)
 
         for i in range(4-len(accounts)):
@@ -123,10 +128,30 @@ class MAINGUI:
             label.grid(row=i+len(accounts), column=0)
 
     def GetCoinData(self):
-        # PrintCoinGraph
-        pass
-    def ShowCoinInfo(self, event):
-        #PrintCointGraph
+        # # Switch Coins Lists
+        if self.PrintFavoriteCoin:
+            for widget in self.canvasFrame.winfo_children():
+                widget.destroy()
+            for coin in self.User.Star_List:
+                coininfo = self.Coins.GetCoinInfo(coin)
+                self.tempFont = font.Font(size=14)
+                # print(coininfo[0]['market'])
+                if coininfo[0]['change'] == 'RISE':
+                    label = Label(self.canvasFrame,font=self.tempFont, text=coininfo[0]['market']+" 현재가:"+str(coininfo[0]['trade_price'])+" ", bg='white', foreground='red')
+                    label.pack()
+                elif coininfo[0]['change'] == 'FALL':
+                    label = Label(self.canvasFrame,font=self.tempFont, text=coininfo[0]['market']+" 현재가:"+str(coininfo[0]['trade_price'])+" ", bg='white', foreground='blue')
+                    label.pack()
+        else:
+            #print All-List
+            pass
+        self.canvasFrame.update()
+
+    def ShowCoinInfo(self, event, name):
+        self.CoinName.insert(0, name)
+        self.CoinSearch()
+        self.CoinName.delete(0, END)
+    def StarCatch(self, event):
         pass
     def ChangePrice(self):
         if self.MarketPrice == True:
@@ -146,22 +171,32 @@ class MAINGUI:
     def ShowAllCoins(self):
         self.tempFont= font.Font(size=14)
         for c in self.Coins.KRW_List:
-            label = Label(self.canvasFrame,font=self.tempFont, text='['+c['market']+']   '+c['korean_name'])
+            label = Label(self.canvasFrame,font=self.tempFont, text='['+c['market']+'] - '+c['korean_name'], bg='white', foreground='green')
             label.pack()
-            label.bind('<Double-Button-1>', self.ShowCoinInfo)
+            label.bind('<Double-Button-1>', lambda event, name= c['market'] : self.ShowCoinInfo(event,name))
+            label.bind('<Double-Button-2>', self.StarCatch)
 
     def CoinSearch(self):
-        pass
         self.sticklabel1.config(text='가격')
         self.sticklabel2.config(text='양')
         name = self.CoinName.get()
         interval = 'day'
-        fig = Figure(figsize=(8, 6))
+        fig = Figure(figsize=(6, 4), dpi= 64)
         if self.Coins.find_coin(name):
             coin = self.Coins.get_coin(name)
-            df = get_ohlcv(ticker= coin['market'], interval=interval, count=30)
-            ax = fig.add_subplot(111)
-        pass
+            df = get_ohlcv(ticker= coin['market'], interval=interval, count=20)
+            ax = fig.add_subplot(1,1,1)
+            new_idx = df.index.strftime('%d').tolist()
+            ax.plot(new_idx, df['close'], label='Close Price')
+            ax.set_title(self.Coins.change_name(name))
+            if self.GraphWidget:
+                self.GraphCanvas.get_tk_widget().destroy()
+            else:
+                self.GraphCanvas.destroy()
+                self.GraphWidget = True
+            self.GraphCanvas = FigureCanvasTkAgg(fig, master=self.GraphFrame)
+            self.GraphCanvas.get_tk_widget().pack()
+            self.GraphCanvas.draw()
 
 
     def Sell(self):
@@ -186,7 +221,7 @@ class MAINGUI:
         cnt = self.User.market_buy(name, price)
         if self.MarketPrice:
             if 0 > self.User.market_buy(name, price):
-                self.sticklabel1.config(text='Error!!!!!!!!!!!!!!!!!'+str(cnt))
+                self.sticklabel1.config(text='Error!!!!!!!!!!!!!!!!(!'+str(cnt))
                 self.sticklabel2.config(text='Error!!!!!!!!!!!!!!!!!'+str(cnt))
         else:
             if -1 == self.User.limit_buy(name, price, volume):

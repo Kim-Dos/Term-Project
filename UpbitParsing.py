@@ -39,14 +39,21 @@ class UPBIT_INFO:
         for c in self.KRW_List:
             if c['korean_name'] == name or c['english_name'] == name or c['market'] == name:
                 return c
+    def change_name(self, name):
+        for c in self.KRW_List:
+            if c['korean_name'] == name or c['english_name'] == name or c['market'] == name:
+                return c['market']
 #  실제로 유저의 요청을 받는 클래스
 #  현재 들고있는 코인 및 원화, 매수, 매도 및 return된 정보를 받아서 또 return
 class USER_INFO:
     Coin_info = UPBIT_INFO()
+    Star_List = []
     def __init__(self):
         # API KEY를 통한 자신의 계정 진입
         with open("key.txt") as f:
             access_key, secret_key = [line.strip() for line in f.readlines()]
+        with open('StartList.txt') as l:
+            [self.Star_List.append(line.strip()) for line in l.readlines()]
 
         # 업비트로 연동
         self.user = Upbit(access_key, secret_key)
@@ -101,3 +108,5 @@ class USER_INFO:
         account = self.user.get_balances()
         return account
 
+# d = UPBIT_INFO()
+# d.TickerUrl("KRW_BTC")
