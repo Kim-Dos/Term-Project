@@ -39,10 +39,14 @@ class UPBIT_INFO:
         for c in self.KRW_List:
             if c['korean_name'] == name or c['english_name'] == name or c['market'] == name:
                 return c
-    def change_name(self, name):
+    def change_market_name(self, name):
         for c in self.KRW_List:
             if c['korean_name'] == name or c['english_name'] == name or c['market'] == name:
                 return c['market']
+    def change_korean_name(self, name):
+        for c in self.KRW_List:
+            if c['korean_name'] == name or c['english_name'] == name or c['market'] == name:
+                return c['korean_name']
 #  실제로 유저의 요청을 받는 클래스
 #  현재 들고있는 코인 및 원화, 매수, 매도 및 return된 정보를 받아서 또 return
 class USER_INFO:
@@ -107,6 +111,39 @@ class USER_INFO:
     def currentAccount(self):
         account = self.user.get_balances()
         return account
+
+    def addStarList(self, name):
+        m_name = self.Coin_info.change_market_name(name)
+        if self.Star_List.count(m_name) == 0 and len(self.Star_List) < 10:
+            self.Star_List.append(m_name)
+            with open('StartList.txt', 'w') as f:
+                for c in self.Star_List:
+                    f.write(c+'\n')
+            self.Star_List.clear()
+            with open('StartList.txt') as l:
+                [self.Star_List.append(line.strip()) for line in l.readlines()]
+            print(self.Star_List)
+
+            return True
+        else:
+            return False
+
+    def removeStarList(self, name):
+        m_name = self.Coin_info.change_market_name(name)
+        if self.Star_List.count(m_name) > 0:
+            self.Star_List.remove(m_name)
+            with open('StartList.txt', 'w') as f:
+                for c in self.Star_List:
+                    f.write(c+'\n')
+            self.Star_List.clear()
+            with open('StartList.txt') as l:
+                [self.Star_List.append(line.strip()) for line in l.readlines()]
+            print(self.Star_List)
+
+            return True
+        else:
+            return False
+
 
 # d = UPBIT_INFO()
 # d.TickerUrl("KRW_BTC")
