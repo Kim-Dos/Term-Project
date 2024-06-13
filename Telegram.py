@@ -2,6 +2,7 @@ import telepot
 import time
 import sys
 import traceback
+import spam
 from UpbitParsing import *
 import Gmail
 
@@ -51,7 +52,11 @@ def SendMail(userID, coinname, logcount, email):
         bot.sendMessage(userID, "전송에 실패하였습니다")
 def SuggestCoin(userID, coinname):
     m_name = coins.change_market_name(coinname)
-    pass
+    logs = get_ohlcv(ticker=m_name, count=20)
+    values = logs['close']
+    s_value = values.to_list()
+    psellPrice, pmainPrice, pbuyPrice, RSI = spam.PredictPrice(s_value)
+    Sending(userID, "이평선"+str(round(pmainPrice,2))+"원, 추천 매수:"+str(round(psellPrice,2))+"원, 추천 매도:"+str(round(pbuyPrice,2))+"원, RSI 지수:"+str(round(RSI,2)))
 
 def Sending(userID, msg):
     try:

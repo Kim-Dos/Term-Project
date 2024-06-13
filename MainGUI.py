@@ -240,12 +240,10 @@ class MAINGUI:
         name = self.CoinName.get()
         m_name = self.Coins.change_market_name(name)
         logs = get_ohlcv(ticker=m_name, count=20)
-        # print(logs.get('close'))
         values = logs['close']
-        print(type(values))
-        s_value = values.to_string()
-        psellPrice, pbuyPrice = spam.PredictPrice(s_value)
-        # messagebox.showinfo("추천 매매가", "추천 매수:"+psellPrice+", 추천 매도:"+pbuyPrice)
+        s_value = values.to_list()
+        psellPrice, pmainPrice, pbuyPrice, RSI = spam.PredictPrice(s_value)
+        messagebox.showinfo("추천 매매가", "이평선"+str(round(pmainPrice,2))+"원, 추천 매수:"+str(round(psellPrice,2))+"원, 추천 매도:"+str(round(pbuyPrice,2))+"원, RSI 지수:"+str(round(RSI,2)))
 
     def Sell(self):
         name = self.CoinName.get()
