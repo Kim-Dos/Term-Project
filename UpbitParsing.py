@@ -122,8 +122,6 @@ class USER_INFO:
             self.Star_List.clear()
             with open('StartList.txt') as l:
                 [self.Star_List.append(line.strip()) for line in l.readlines()]
-            print(self.Star_List)
-
             return True
         else:
             return False
